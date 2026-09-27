@@ -1,0 +1,221 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #faf8ff;
+  --color-surface: #ffffff;
+  --color-text: #2b2640;
+  --color-muted: #726c8a;
+  --color-primary: #7c6cf0;
+  --color-primary-strong: #6553e0;
+  --color-primary-soft: #ece8ff;
+  --color-primary-foreground: #ffffff;
+  --color-mint: #c9f2e1;
+  --color-mint-strong: #1f7a5a;
+  --color-peach: #ffe1cf;
+  --color-peach-strong: #b4532a;
+  --color-sky: #d9ecff;
+  --color-sky-strong: #2c5f95;
+  --color-butter: #fff3c4;
+  --color-butter-strong: #8a6414;
+  --color-blush: #ffd9ea;
+  --color-success: #1f9a6c;
+  --color-warning: #c9861a;
+  --color-error: #d9534f;
+  --color-border: #ebe7f7;
+  --font-sans: "Nunito", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  --shadow-soft: 0 10px 30px -12px rgba(124, 108, 240, 0.25), 0 2px 6px rgba(43, 38, 64, 0.04);
+  --shadow-lift: 0 18px 40px -14px rgba(124, 108, 240, 0.38), 0 4px 10px rgba(43, 38, 64, 0.05);
+
+  --animate-fade-up: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pop-in: pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-float-slow: float 16s ease-in-out infinite;
+  --animate-pulse-ring: pulse-ring 2.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-wiggle: wiggle 0.5s ease-in-out;
+  --animate-grow-x: grow-x 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    50% {
+      transform: translate(18px, -22px) scale(1.05);
+    }
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(0.9);
+      opacity: 0.55;
+    }
+    80%,
+    100% {
+      transform: scale(1.45);
+      opacity: 0;
+    }
+  }
+
+  @keyframes shimmer {
+    from {
+      background-position: -200% 0;
+    }
+    to {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes wiggle {
+    0%,
+    100% {
+      transform: rotate(0);
+    }
+    30% {
+      transform: rotate(-8deg);
+    }
+    60% {
+      transform: rotate(6deg);
+    }
+  }
+
+  @keyframes grow-x {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    @apply bg-background text-text font-sans antialiased;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+
+  ::selection {
+    background: #ddd6ff;
+  }
+}
+
+@layer components {
+  .bg-blobs {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    background: linear-gradient(180deg, #fbf9ff 0%, #f7f4ff 45%, #fdf8f5 100%);
+  }
+
+  /* Degradés radiales en vez de filter: blur, y solo transform animado: se mueve en la GPU sin repintar. */
+  .bg-blobs::before,
+  .bg-blobs::after,
+  .bg-blobs > span {
+    content: "";
+    position: absolute;
+    border-radius: 9999px;
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+
+  .bg-blobs::before {
+    width: 44rem;
+    height: 44rem;
+    top: -16rem;
+    left: -14rem;
+    background: radial-gradient(circle, rgba(221, 212, 255, 0.75) 0%, rgba(221, 212, 255, 0) 65%);
+    animation: var(--animate-float-slow);
+  }
+
+  .bg-blobs::after {
+    width: 40rem;
+    height: 40rem;
+    top: 25%;
+    right: -16rem;
+    background: radial-gradient(circle, rgba(201, 242, 225, 0.75) 0%, rgba(201, 242, 225, 0) 65%);
+    animation: var(--animate-float-slow);
+    animation-delay: -4s;
+  }
+
+  .bg-blobs > span {
+    width: 36rem;
+    height: 36rem;
+    bottom: -14rem;
+    left: 25%;
+    background: radial-gradient(circle, rgba(255, 225, 207, 0.7) 0%, rgba(255, 225, 207, 0) 65%);
+    animation: var(--animate-float-slow);
+    animation-delay: -8s;
+  }
+
+  body:has([aria-modal="true"]) .bg-blobs::before,
+  body:has([aria-modal="true"]) .bg-blobs::after,
+  body:has([aria-modal="true"]) .bg-blobs > span {
+    animation-play-state: paused;
+  }
+
+  .text-gradient {
+    background: linear-gradient(100deg, #7c6cf0 0%, #b18cf5 45%, #f59bb8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .bg-gradient-brand {
+    background: linear-gradient(120deg, #7c6cf0 0%, #9d7ff2 50%, #e79bc8 100%);
+  }
+
+  .skeleton {
+    background: linear-gradient(90deg, #f1eeff 25%, #faf8ff 50%, #f1eeff 75%);
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

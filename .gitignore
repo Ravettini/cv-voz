@@ -1,0 +1,25 @@
+node_modules
+dist
+coverage
+.vite
+*.log
+.DS_Store
+Thumbs.db
+
+.env
+.env.*
+!.env.example
+
+backend/.data
+
+# Playwright / Puppeteer
+.cache
+playwright-report
+test-results
+
+# IDE
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+.vercel

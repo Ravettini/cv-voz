@@ -1,4 +1,5 @@
 {
+  "installCommand": "npm install && npm run build -w shared",
   "buildCommand": "npm run build -w shared && npm run build -w frontend",
   "outputDirectory": "frontend/dist",
   "framework": null,
@@ -9,8 +10,6 @@
   "functions": {
     "api/server.ts": {
       "maxDuration": 60,
-      "memory": 1024,
-      "includeFiles": "frontend/dist/**",
       "excludeFiles": "node_modules/puppeteer/**"
     }
   }

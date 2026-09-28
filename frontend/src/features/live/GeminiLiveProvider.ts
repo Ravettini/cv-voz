@@ -63,7 +63,7 @@ export class GeminiLiveProvider implements LiveInterviewProvider {
             startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_LOW,
             endOfSpeechSensitivity: EndSensitivity.END_SENSITIVITY_LOW,
             prefixPaddingMs: 400,
-            silenceDurationMs: 1400,
+            silenceDurationMs: 2000,
           },
         },
       },
@@ -229,12 +229,6 @@ export class GeminiLiveProvider implements LiveInterviewProvider {
     this.session.sendRealtimeInput({
       audio: { data: base64Pcm, mimeType: "audio/pcm;rate=16000" },
     });
-  }
-
-  /** Cierra el turno del usuario. El próximo audio vuelve a abrir el micrófono. */
-  endUtterance(): void {
-    if (this.paused || !this.session || !this.micEnabled || this.assistantSpeaking) return;
-    this.session.sendRealtimeInput({ audioStreamEnd: true });
   }
 
   sendText(text: string): void {

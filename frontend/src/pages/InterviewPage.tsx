@@ -95,7 +95,7 @@ export function InterviewPage() {
   const autoFinalizeStarted = useRef(false);
   const awaitingLinkDecision = useRef(false);
   const finalizeRef = useRef<() => Promise<void>>(async () => undefined);
-  const speechGateRef = useRef(createSpeechGate({ startFrames: 2, hangoverMs: 1600, frameMs: 256 }));
+  const speechGateRef = useRef(createSpeechGate({ startFrames: 2, hangoverMs: 2200, frameMs: 256 }));
 
   useEffect(() => {
     setMode(preferredMode);
@@ -228,19 +228,15 @@ export function InterviewPage() {
       setLevel(Math.min(1, analysis.rms * 8));
 
       const provider = providerRef.current;
-      if (!provider || provider.isAssistantSpeaking() || !provider.isMicEnabled()) {
+      if (!provider || provider.isAssistantSpeaking()) {
         speechGateRef.current.reset();
         return;
       }
 
-      // Voz real, o silencio digital si es ruido. El silencio es lo que cierra el turno.
-      const wasOpen = speechGateRef.current.isOpen();
-      const voiced = speechGateRef.current.push(analysis);
-      if (voiced) {
-        provider.sendAudio(floatTo16BitPcmBase64(input));
-        return;
-      }
-      if (wasOpen) provider.endUtterance();
+      // Solo voz. El silencio de después del habla lo manda el propio micrófono, para que se transcriba y el turno se cierre.
+      if (!speechGateRef.current.push(analysis)) return;
+
+      provider.sendAudio(floatTo16BitPcmBase64(input));
     };
   }, []);
 

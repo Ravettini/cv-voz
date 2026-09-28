@@ -22,7 +22,28 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   }
   headers.set("Authorization", `Bearer ${LOCAL_DEV_TOKEN}`);
 
-  const res = await fetch(`${API_URL}${path}`, { ...init, headers });
+  const method = (init.method ?? "GET").toUpperCase();
+  let body = init.body;
+  if (path !== "/api/dev/hydrate" && method !== "GET" && method !== "HEAD" && !(body instanceof FormData)) {
+    const cache = readBrowserCache();
+    if (cache) {
+      try {
+        const parsed =
+          typeof body === "string" && body
+            ? (JSON.parse(body) as Record<string, unknown>)
+            : ({} as Record<string, unknown>);
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          parsed._cache = cache;
+          body = JSON.stringify(parsed);
+          if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+        }
+      } catch {
+        /* Si el cuerpo no es JSON, el pedido sigue sin la copia del navegador. */
+      }
+    }
+  }
+
+  const res = await fetch(`${API_URL}${path}`, { ...init, headers, body });
   if (!res.ok) {
     let message = "Algo no salió como esperábamos. Probá de nuevo.";
     let code: string | undefined;

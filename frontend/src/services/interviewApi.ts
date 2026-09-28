@@ -20,9 +20,10 @@ export const interviewApi = {
     }),
   pause: (id: string) => apiFetch<{ session: InterviewSession }>(`/api/interviews/${id}/pause`, { method: "POST" }),
   resume: (id: string) => apiFetch<{ session: InterviewSession }>(`/api/interviews/${id}/resume`, { method: "POST" }),
-  finalize: (id: string) =>
+  finalize: (id: string, segments: Array<{ role: "user" | "assistant"; text: string }>) =>
     apiFetch<{ session: InterviewSession; profile: CandidateProfile }>(`/api/interviews/${id}/finalize`, {
       method: "POST",
+      body: JSON.stringify({ segments }),
     }),
 };
 

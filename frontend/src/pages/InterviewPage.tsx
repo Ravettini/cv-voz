@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createPcmPlayer, createSpeechGate, analyzeVoiceFrame, floatTo16BitPcmBase64 } from "@/features/live/audio";
 import { GeminiLiveProvider } from "@/features/live/GeminiLiveProvider";
 import { cn } from "@/lib/utils";
+import { rememberLocalSegment } from "@/lib/browserCache";
 import { interviewApi } from "@/services/interviewApi";
 import { useCandidateProfileStore } from "@/stores/candidateProfileStore";
 import { useInterviewStore } from "@/stores/interviewStore";
@@ -94,7 +95,7 @@ export function InterviewPage() {
   const autoFinalizeStarted = useRef(false);
   const awaitingLinkDecision = useRef(false);
   const finalizeRef = useRef<() => Promise<void>>(async () => undefined);
-  const speechGateRef = useRef(createSpeechGate({ startFrames: 2, hangoverMs: 2200, frameMs: 256 }));
+  const speechGateRef = useRef(createSpeechGate({ startFrames: 2, hangoverMs: 800, frameMs: 256 }));
 
   useEffect(() => {
     setMode(preferredMode);
@@ -102,12 +103,22 @@ export function InterviewPage() {
 
   const persistSegment = useCallback(
     async (role: "user" | "assistant", text: string) => {
-      if (!session || !text.trim()) return;
+      const clean = text.trim();
+      if (!session || !clean) return;
+      const local = {
+        id: crypto.randomUUID(),
+        sessionId: session.id,
+        role,
+        text: clean,
+        sequence: useInterviewStore.getState().segments.length,
+        createdAt: new Date().toISOString(),
+      };
+      addSegment(local);
+      rememberLocalSegment(local);
       try {
-        const { segments: saved } = await interviewApi.addSegments(session.id, [{ role, text }]);
-        saved.forEach(addSegment);
+        await interviewApi.addSegments(session.id, [{ role, text: clean }]);
       } catch {
-        /* soft fail; UI keeps local text */
+        /* La copia del navegador ya quedó. El servidor se rehidrata en el próximo pedido. */
       }
     },
     [addSegment, session],
@@ -203,7 +214,12 @@ export function InterviewPage() {
     const processor = audioCtx.createScriptProcessor(4096, 1, 1);
     processorRef.current = processor;
     source.connect(processor);
-    processor.connect(audioCtx.destination);
+    // El procesador tiene que estar conectado para emitir frames, pero no hay que
+    // devolver el micrófono a los parlantes: ese eco deja el turno abierto para siempre.
+    const mute = audioCtx.createGain();
+    mute.gain.value = 0;
+    processor.connect(mute);
+    mute.connect(audioCtx.destination);
     speechGateRef.current.reset();
 
     processor.onaudioprocess = (event) => {
@@ -212,16 +228,15 @@ export function InterviewPage() {
       setLevel(Math.min(1, analysis.rms * 8));
 
       const provider = providerRef.current;
-      if (!provider || provider.isAssistantSpeaking()) {
+      if (!provider || provider.isAssistantSpeaking() || !provider.isMicEnabled()) {
         speechGateRef.current.reset();
         return;
       }
 
-      // No mandar ruido de autos/motos: solo voz (o hangover post-voz para cerrar el turno).
-      if (!speechGateRef.current.push(analysis)) return;
-
-      const base64 = floatTo16BitPcmBase64(input);
-      provider.sendAudio(base64);
+      // Voz real, o silencio digital si es ruido. El silencio es lo que cierra el turno.
+      const voiced = speechGateRef.current.push(analysis);
+      const frame = voiced ? input : new Float32Array(input.length);
+      provider.sendAudio(floatTo16BitPcmBase64(frame));
     };
   }, []);
 
@@ -266,10 +281,15 @@ export function InterviewPage() {
     void (async () => {
       try {
         if (session) {
-          const data = await interviewApi.get(session.id);
-          if (!cancelled) {
-            setSession(data.session);
-            setSegments(data.segments);
+          try {
+            const data = await interviewApi.get(session.id);
+            const localCount = useInterviewStore.getState().segments.length;
+            if (!cancelled && data.segments.length >= localCount) {
+              setSession(data.session);
+              setSegments(data.segments);
+            }
+          } catch {
+            /* Seguimos con lo que ya está en este navegador. */
           }
           return;
         }
@@ -370,7 +390,11 @@ export function InterviewPage() {
           { role: "user", text: `Links para incluir en el CV:\n${summary}` },
         ]);
       }
-      const result = await interviewApi.finalize(session.id);
+      const transcript = useInterviewStore.getState().segments.map((segment) => ({
+        role: segment.role,
+        text: segment.text,
+      }));
+      const result = await interviewApi.finalize(session.id, transcript);
       setProfile(result.profile);
       navigate("/review");
     } catch (err) {

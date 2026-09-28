@@ -69,14 +69,25 @@ function rememberSession(cache: BrowserCache, session: InterviewSession): void {
   if (!cache.segmentsBySession[session.id]) cache.segmentsBySession[session.id] = [];
 }
 
+function sameTurn(a: TranscriptSegment, b: TranscriptSegment): boolean {
+  return a.id === b.id || (a.role === b.role && a.text.trim() === b.text.trim() && a.sequence === b.sequence);
+}
+
 function rememberSegments(cache: BrowserCache, sessionId: string, segments: TranscriptSegment[], replace = false): void {
   if (replace) {
     cache.segmentsBySession[sessionId] = segments;
     return;
   }
   const current = cache.segmentsBySession[sessionId] ?? [];
-  const known = new Set(current.map((segment) => segment.id));
-  cache.segmentsBySession[sessionId] = [...current, ...segments.filter((segment) => !known.has(segment.id))];
+  const fresh = segments.filter((segment) => !current.some((item) => sameTurn(item, segment)));
+  cache.segmentsBySession[sessionId] = [...current, ...fresh];
+}
+
+export function rememberLocalSegment(segment: TranscriptSegment): void {
+  const cache = load();
+  if (!cache.segmentsBySession[segment.sessionId]) cache.segmentsBySession[segment.sessionId] = [];
+  rememberSegments(cache, segment.sessionId, [segment]);
+  save(cache);
 }
 
 /** Guarda en localStorage lo que devuelve la API, para sobrevivir a un reinicio. */

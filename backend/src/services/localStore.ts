@@ -54,6 +54,35 @@ export const localDb = {
     return session;
   },
 
+  /** En Vercel cada pedido puede caer en otro proceso. Si falta, la recreamos. */
+  ensureInterview(userId: string, id: string): InterviewSession {
+    const existing = this.getInterview(userId, id);
+    if (existing) return existing;
+    const now = new Date().toISOString();
+    const session: InterviewSession = {
+      id,
+      userId,
+      status: "active",
+      startedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+    interviews.set(id, session);
+    if (!segments.has(id)) segments.set(id, []);
+    return session;
+  },
+
+  replaceSegments(sessionId: string, list: TranscriptSegment[]): void {
+    segments.set(
+      sessionId,
+      list.map((segment, index) => ({
+        ...segment,
+        sessionId,
+        sequence: index,
+      })),
+    );
+  },
+
   updateInterview(userId: string, id: string, status: InterviewStatus, extra: Partial<InterviewSession> = {}): InterviewSession | null {
     const session = this.getInterview(userId, id);
     if (!session) return null;

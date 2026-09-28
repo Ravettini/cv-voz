@@ -7,9 +7,7 @@ export async function createInterview(userId: string): Promise<InterviewSession>
 }
 
 export async function getInterview(userId: string, id: string): Promise<InterviewSession> {
-  const session = localDb.getInterview(userId, id);
-  if (!session) throw new HttpError(404, "No encontramos esa entrevista.", "NOT_FOUND");
-  return session;
+  return localDb.ensureInterview(userId, id);
 }
 
 export async function updateInterviewStatus(
@@ -18,6 +16,7 @@ export async function updateInterviewStatus(
   status: InterviewStatus,
   extra: Record<string, unknown> = {},
 ): Promise<InterviewSession> {
+  localDb.ensureInterview(userId, id);
   const session = localDb.updateInterview(userId, id, status, {
     completedAt: extra.completed_at ? String(extra.completed_at) : undefined,
   });

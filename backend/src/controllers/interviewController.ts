@@ -11,6 +11,7 @@ import {
   listSegments,
   updateInterviewStatus,
 } from "../services/interviewStore.js";
+import { localDb } from "../services/localStore.js";
 import { saveCandidateProfile } from "../services/profileStore.js";
 import { HttpError } from "../middleware/errorHandler.js";
 import { paramId } from "../utils/params.js";
@@ -97,6 +98,25 @@ export async function cancel(req: Request, res: Response): Promise<void> {
 export async function finalize(req: Request, res: Response): Promise<void> {
   const id = paramId(req);
   const session = await getInterview(req.user.id, id);
+  const incoming = z
+    .object({
+      segments: z.array(SegmentSchema).max(200).optional(),
+    })
+    .parse(req.body ?? {});
+  if (incoming.segments?.length) {
+    const now = new Date().toISOString();
+    localDb.replaceSegments(
+      session.id,
+      incoming.segments.map((segment, index) => ({
+        id: segment.clientId ?? `${session.id}-${index}`,
+        sessionId: session.id,
+        role: segment.role,
+        text: segment.text,
+        sequence: index,
+        createdAt: now,
+      })),
+    );
+  }
   const segments = await listSegments(session.id);
   const profile = await extractCandidateProfile({
     profileId: randomUUID(),

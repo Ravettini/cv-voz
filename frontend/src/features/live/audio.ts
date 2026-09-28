@@ -72,7 +72,7 @@ export function analyzeVoiceFrame(input: Float32Array): VoiceFrameAnalysis {
   const zcr = zeroCrossings / input.length;
   // Voz: energía + variaciones medias. Rumbling de motor: RMS alto pero speechLike/zcr bajos.
   const isSpeechLike =
-    rms >= 0.02 && speechLike >= 0.012 && zcr >= 0.02 && speechLike / Math.max(rms, 1e-6) >= 0.35;
+    rms >= 0.01 && speechLike >= 0.006 && zcr >= 0.015 && speechLike / Math.max(rms, 1e-6) >= 0.28;
   return { rms, speechLike, isSpeechLike };
 }
 

@@ -30,7 +30,7 @@ export function liveRealtimeInputConfig() {
       startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_LOW,
       endOfSpeechSensitivity: EndSensitivity.END_SENSITIVITY_LOW,
       prefixPaddingMs: 400,
-      silenceDurationMs: 2000,
+      silenceDurationMs: 1400,
     },
   };
 }

@@ -1,6 +1,6 @@
 import { Modality } from "@google/genai";
 import { INTERVIEWER_SYSTEM_PROMPT } from "../../prompts/interviewerSystemPrompt.js";
-import { geminiConfig, liveSpeechConfig } from "../../config/geminiConfig.js";
+import { geminiConfig, liveRealtimeInputConfig, liveSpeechConfig } from "../../config/geminiConfig.js";
 import { env, isDemoMode } from "../../config/env.js";
 import { HttpError, humanizeGeminiError } from "../../middleware/errorHandler.js";
 import { logger } from "../../utils/logger.js";
@@ -46,6 +46,7 @@ export async function createLiveEphemeralToken(): Promise<LiveTokenResponse> {
             inputAudioTranscription: {},
             outputAudioTranscription: {},
             speechConfig: liveSpeechConfig(),
+            realtimeInputConfig: liveRealtimeInputConfig(),
           },
         },
         httpOptions: { apiVersion: geminiConfig.liveApiVersion },

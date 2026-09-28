@@ -3,6 +3,16 @@
   "buildCommand": "npm run build -w shared && npm run build -w frontend",
   "outputDirectory": "frontend/dist",
   "framework": null,
+  "headers": [
+    {
+      "source": "/",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+    },
+    {
+      "source": "/index.html",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+    }
+  ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/server" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }

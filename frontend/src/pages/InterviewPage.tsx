@@ -95,7 +95,7 @@ export function InterviewPage() {
   const autoFinalizeStarted = useRef(false);
   const awaitingLinkDecision = useRef(false);
   const finalizeRef = useRef<() => Promise<void>>(async () => undefined);
-  const speechGateRef = useRef(createSpeechGate({ startFrames: 2, hangoverMs: 800, frameMs: 256 }));
+  const speechGateRef = useRef(createSpeechGate({ startFrames: 2, hangoverMs: 1600, frameMs: 256 }));
 
   useEffect(() => {
     setMode(preferredMode);
@@ -234,9 +234,13 @@ export function InterviewPage() {
       }
 
       // Voz real, o silencio digital si es ruido. El silencio es lo que cierra el turno.
+      const wasOpen = speechGateRef.current.isOpen();
       const voiced = speechGateRef.current.push(analysis);
-      const frame = voiced ? input : new Float32Array(input.length);
-      provider.sendAudio(floatTo16BitPcmBase64(frame));
+      if (voiced) {
+        provider.sendAudio(floatTo16BitPcmBase64(input));
+        return;
+      }
+      if (wasOpen) provider.endUtterance();
     };
   }, []);
 

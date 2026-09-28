@@ -231,6 +231,12 @@ export class GeminiLiveProvider implements LiveInterviewProvider {
     });
   }
 
+  /** Cierra el turno del usuario. El próximo audio vuelve a abrir el micrófono. */
+  endUtterance(): void {
+    if (this.paused || !this.session || !this.micEnabled || this.assistantSpeaking) return;
+    this.session.sendRealtimeInput({ audioStreamEnd: true });
+  }
+
   sendText(text: string): void {
     if (!this.session) return;
     this.session.sendClientContent({
